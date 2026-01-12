@@ -1,0 +1,35 @@
+name: Generate SBOM
+
+on:
+  push:
+    branches: [ "main" ]
+  release:
+    types: [created]
+
+jobs:
+  build-sbom:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2' # Match your project version
+          extensions: dom, json, libxml
+          tools: composer:v2
+
+      - name: Generate SBOM
+        uses: CycloneDX/gh-php-composer-generate-sbom@v1
+        with:
+          # Optional: specify output format (XML or JSON)
+          output-format: 'JSON'
+          # Optional: specify output file path
+          output-file: 'bom.json'
+
+      - name: Upload SBOM Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cyclonedx-sbom
+          path: bom.json
