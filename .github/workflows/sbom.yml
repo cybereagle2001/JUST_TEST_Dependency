@@ -7,7 +7,7 @@ on:
     types: [created]
 
 jobs:
-  build-sbom:
+  sbom:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -16,20 +16,20 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.2' # Match your project version
+          php-version: '8.2'
           extensions: dom, json, libxml
           tools: composer:v2
+
+      # We manually install the plugin to ensure the command is available 
+      # and trusted before the Action runs.
+      - name: Install CycloneDX Plugin
+        run: |
+          composer global config allow-plugins.cyclonedx/cyclonedx-php-composer true
+          composer global require cyclonedx/cyclonedx-php-composer
 
       - name: Generate SBOM
         uses: CycloneDX/gh-php-composer-generate-sbom@v1
         with:
-          # Optional: specify output format (XML or JSON)
-          output-format: 'JSON'
-          # Optional: specify output file path
-          output-file: 'bom.json'
-
-      - name: Upload SBOM Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: cyclonedx-sbom
-          path: bom.json
+          # If your composer.json is NOT in the root, uncomment the line below:
+          # path: ./my-sub-folder
+          args: "--output-format=JSON --output-file=bom.json"
